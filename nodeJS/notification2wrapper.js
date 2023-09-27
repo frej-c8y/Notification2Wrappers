@@ -88,7 +88,7 @@ module.exports = class Notification2Wrapper {
 
   async initialize() {
     this.customLogger.log(`Searching existing subscription named '${this.name}'...`);
-    let existingSubscription = await doFindSubscription( this.name, this.providerUrl, this.username, this.password, 1);
+    let existingSubscription = await doFindSubscription( this.name, this.providerUrl, this.username, this.password, 1, this.customLogger);
     this.customLogger.log('... found subscription:', existingSubscription);
     if (_.has(existingSubscription, "id")) {
       await doDeleteSubscription( this.providerUrl, this.username, this.password, existingSubscription, this.customLogger );
@@ -191,7 +191,7 @@ module.exports = class Notification2Wrapper {
   }
 };
 
-async function doFindSubscription(name, providerUrl, username, password, currentPage) {
+async function doFindSubscription(name, providerUrl, username, password, currentPage, customLogger) {
   return new Promise(function (resolve, reject) {
     request(
       {
@@ -207,10 +207,33 @@ async function doFindSubscription(name, providerUrl, username, password, current
           reject(err);
         }
 
-        let JSONbody = JSON.parse(body);
-        let subscriptions = _.get(JSONbody, "subscriptions", []);
-        let subscription = _.find(subscriptions, { subscription: name });
-        resolve(formatSubscription(subscription));
+        customLogger.debug(`Searching for subscription '${name}' in page ${currentPage}`);
+        const statusCode = _.get(res, "statusCode", -1);
+        if (statusCode !== 200) {
+          // The <providerUrl>/notification2/subscription endpoint should always be available
+          // UNLESS the Notification 2.0 API is not installed on the Cumulocity IoT server
+          customLogger.debug(`Search for subscription '${name}' in page ${currentPage} returned unexpected status ${statusCode}`);
+          reject(`The Notification 2.0 API does not seem to be installed or active on the Cumulocity IoT server. Please check the server configuration.`);
+        } else {
+          let JSONbody = JSON.parse(body);
+          let subscriptions = _.get(JSONbody, "subscriptions", []);
+          let subscription = _.find(subscriptions, { subscription: name });
+          if (typeof subscription !== "undefined") {
+            // Return the subscription if found
+            customLogger.debug(`Found subscription '${name}' in page ${currentPage}`);
+            resolve(formatSubscription(subscription));
+          } else {
+            // If the subscription is not found, search for it in the following pages
+            let totalPages = _.get(JSONbody, "statistics.totalPages", 1);
+            if (currentPage < totalPages) {
+              // Last page not reached -> recursive search
+              resolve(doFindSubscription(name, providerUrl, username, password, currentPage + 1, customLogger));
+            } else {
+              // Last page reached -> the subscription does not exist
+              resolve({});
+            }
+          }
+        }
       }
     );
   });
