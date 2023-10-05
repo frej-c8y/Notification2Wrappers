@@ -132,7 +132,7 @@ module.exports = class Notification2Wrapper {
     const self = this;
 
     if (!this.subscription) {
-      throw "Unable to create a token before the subscription has been initialized - Execute await Notification2Wrapper.initialize() before attempting to create the token";
+      throw "Unable to open the websocket before the subscription has been initialized - Execute await Notification2Wrapper.initialize() before attempting to open the websocket";
     }
 
     await self.createToken();

@@ -36,11 +36,11 @@ let subscription = undefined;
 })();
 
 function startProcessingMessages() {
-  subscription.openWebsocket(processMessageCallback, afterCloseCallback);
+  subscription.openWebsocket(processMessageCallback);
 }
 
 async function processMessageCallback(message) {
-  // For test purposes: we stop as soon as at least one message is received
+  // For test purposes: we unsubscribe and close the websocket as soon as at least one message is received
 
   let notificationEventType = message.notificationHeaders[0].split("/")[2];
  
@@ -55,14 +55,6 @@ async function processMessageCallback(message) {
   // Allow 5s extra time before closing the websocket to consume and acknowledge pending incoming messages
   await sleep(5000);
   subscription.closeWebsocket(false);
-}
-
-async function afterCloseCallback() {
-  console.log(`  Waiting for 10 sec before restarting...`);
-  await sleep(10000);
-  console.log(`  -> Restart...`);
-
-  startProcessingMessages();
 }
 
 function sleep(milliseconds) {
