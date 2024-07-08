@@ -86,12 +86,14 @@ module.exports = class Notification2Wrapper {
     return this;
   }
 
-  async initialize() {
-    this.customLogger.log(`Searching existing subscription named '${this.name}'...`);
-    let existingSubscription = await doFindSubscription( this.name, this.providerUrl, this.username, this.password, 1, this.customLogger);
-    this.customLogger.log('... found subscription:', existingSubscription);
-    if (_.has(existingSubscription, "id")) {
-      await doDeleteSubscription( this.providerUrl, this.username, this.password, existingSubscription, this.customLogger );
+  async initialize(overwrite = true) {
+    if (overwrite) {
+      this.customLogger.log(`Searching existing subscription named '${this.name}'...`);
+      let existingSubscription = await doFindSubscription( this.name, this.providerUrl, this.username, this.password, 1, this.customLogger);
+      this.customLogger.log('... found subscription:', existingSubscription);
+      if (_.has(existingSubscription, "id")) {
+        await doDeleteSubscription( this.providerUrl, this.username, this.password, existingSubscription, this.customLogger );
+      }
     }
 
     this.customLogger.log('Creating new subscription...');
