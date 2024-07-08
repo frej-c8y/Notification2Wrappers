@@ -57,7 +57,7 @@ async function processMessageCallback(message) {
  
   console.log(`Message ${msgCount}:${JSON.stringify(message, null, 4)}`);
 
-  const dateDiffInSec = (new Date().getTime() - Date.parse(message.message.time)) / 1000;
+  const dateDiffInSec = (new Date().getTime() - Date.parse(message.message.lastUpdated)) / 1000;
   console.log(`Message is ${dateDiffInSec} sec old`);
   msgCount++;
 
