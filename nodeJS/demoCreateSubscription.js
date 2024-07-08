@@ -1,5 +1,6 @@
 const Notification2wrapper = require("./notification2wrapper");
 const Promise = require("promise");
+const request = require("request");
 const _ = require("lodash");
 
 const {providerUrl, user, password} = require("./credentials")
@@ -7,6 +8,8 @@ const {providerUrl, user, password} = require("./credentials")
 let msgCount = 0;
 
 let subscription = undefined;
+let subscription1 = undefined;
+
 (async function () {
   const credentials = `${user}:${password}`;
   const credentials_base64 = Buffer.from(credentials);
@@ -19,11 +22,19 @@ let subscription = undefined;
     subscription = await new Notification2wrapper(subscriptionName, providerUrl, user, password, console)
       .events(Notification2wrapper.eventTypes.ALARMS)
       // .device(Notification2wrapper.ALL_DEVICES)
-      .device(16412)
+        .device(941587)                // "E-xyz Windturbine #1" on enterprise1.dtm.stage.c8y.io
+      // .device(603532262)           // "m52xq" on enterprise1.dtm.stage.c8y.io
+      // .device(16412)                // on manaswiembed
+      // .device(74409429)             // on oee-staging
       // .type(Notification2wrapper.ALL_TYPES)
       // .type("ProgramStatusChanged");
       .initialize();
-    
+
+    subscription1 = await new Notification2wrapper(subscriptionName, providerUrl, user, password, console)
+        .events(Notification2wrapper.eventTypes.ALARMS)
+        .device(603532262)          // "m52xq" on enterprise1.dtm.stage.c8y.io
+      .initialize(false);
+
     startProcessingMessages();
   } catch (err) {
     console.log("Error catched in caller:", err);
